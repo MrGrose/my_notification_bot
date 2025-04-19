@@ -9,14 +9,20 @@ from environs import Env
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 
 
-logging.basicConfig(
-    format="[%(asctime)s] - %(levelname)s - %(funcName)s - %(message)s",
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+class TelegramLogsHandler(logging.Handler):
+
+    def __init__(self, bot: Bot, chat_id: int) -> None:
+        super().__init__()
+        self.chat_id = chat_id
+        self.bot = bot
+
+    def emit(self, record: logging.LogRecord) -> None:
+        log_entry = self.format(record)
+        self.bot.send_message(chat_id=self.chat_id, text=log_entry)
 
 
-def get_lesson(dev_token: str, bot: Bot, tg_chat_id: int) -> None:
+def long_polling(logger: logging.Logger, dev_token: str, bot: Bot, tg_chat_id: int) -> None:
+    logger.info("Бот запущен")
     url = "https://dvmn.org/api/long_polling/"
     headers = {"Authorization": dev_token}
     params = {"timestamp": None}
@@ -30,9 +36,9 @@ def get_lesson(dev_token: str, bot: Bot, tg_chat_id: int) -> None:
                 timeout=91
             )
             response.raise_for_status()
-            lesson_inf = response.json()
+            checks_lesson = response.json()
 
-            new_timestamp = process_lesson_info(lesson_inf, bot, tg_chat_id)
+            new_timestamp = process_lesson_attempts(checks_lesson, bot, tg_chat_id)
             if new_timestamp:
                 params["timestamp"] = new_timestamp
 
@@ -47,11 +53,11 @@ def get_lesson(dev_token: str, bot: Bot, tg_chat_id: int) -> None:
             logger.error(f"Произошла неизвестная ошибка: {e}")
 
 
-def process_lesson_info(lesson_inf: dict, bot: Bot, tg_chat_id: int) -> Optional[Any | None]:
-    if lesson_inf.get("timestamp") == "timeout":
-        return lesson_inf.get("timestamp_to_request")
+def process_lesson_attempts(checks_lesson: dict, bot: Bot, tg_chat_id: int) -> Optional[Any | None]:
+    if checks_lesson.get("timestamp") == "timeout":
+        return checks_lesson.get("timestamp_to_request")
     else:
-        new_attempts = lesson_inf.get("new_attempts")
+        new_attempts = checks_lesson.get("new_attempts")
 
         if new_attempts and len(new_attempts) > 0:
             attempt = new_attempts[0]
@@ -67,7 +73,7 @@ def process_lesson_info(lesson_inf: dict, bot: Bot, tg_chat_id: int) -> Optional
                 lesson_url
             )
 
-        return lesson_inf.get("last_attempt_timestamp")
+        return checks_lesson.get("last_attempt_timestamp")
 
 
 def send_message(bot: Bot, tg_chat_id: int, lesson_title: str, is_negative: bool, lesson_url: str) -> None:
@@ -87,11 +93,17 @@ def main():
     dev_token = env.str("DEV_TOKEN")
     tg_token = env.str("TG_TOKEN")
     tg_chat_id = env.int("TG_CHAT_ID")
-
     bot = Bot(token=tg_token)
-    logger.info("Бот запускается...")
 
-    get_lesson(dev_token, bot, tg_chat_id)
+    logging.basicConfig(
+        format="[%(asctime)s] - %(levelname)s - %(funcName)s - %(message)s",
+        level=logging.INFO
+    )
+    logger = logging.getLogger('Logger')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramLogsHandler(bot, tg_chat_id))
+
+    long_polling(logger, dev_token, bot, tg_chat_id)
 
 
 if __name__ == '__main__':
