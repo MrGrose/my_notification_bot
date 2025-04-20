@@ -21,7 +21,7 @@ class TelegramLogsHandler(logging.Handler):
         self.bot.send_message(chat_id=self.chat_id, text=log_entry)
 
 
-def long_polling(logger: logging.Logger, dev_token: str, bot: Bot, tg_chat_id: int) -> None:
+def poll_lesson_reviews(logger: logging.Logger, dev_token: str, bot: Bot, tg_chat_id: int) -> None:
     logger.info("Бот запущен")
     url = "https://dvmn.org/api/long_polling/"
     headers = {"Authorization": dev_token}
@@ -103,7 +103,7 @@ def main():
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramLogsHandler(bot, tg_chat_id))
 
-    long_polling(logger, dev_token, bot, tg_chat_id)
+    poll_lesson_reviews(logger, dev_token, bot, tg_chat_id)
 
 
 if __name__ == '__main__':
