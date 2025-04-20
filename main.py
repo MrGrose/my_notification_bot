@@ -42,8 +42,8 @@ def poll_lesson_reviews(logger: logging.Logger, dev_token: str, bot: Bot, tg_cha
             if new_timestamp:
                 params["timestamp"] = new_timestamp
 
-        except ReadTimeout as error:
-            logger.error(f"Ошибка получения ответа от сервера: {error}")
+        except ReadTimeout:
+            continue
         except ConnectionError as error:
             logger.error(f"Ошибка подключения к интернету: {error}")
             time.sleep(30)
