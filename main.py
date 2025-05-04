@@ -99,11 +99,17 @@ def main():
         format="[%(asctime)s] - %(levelname)s - %(funcName)s - %(message)s",
         level=logging.INFO
     )
+
     logger = logging.getLogger('Logger')
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramLogsHandler(bot, tg_chat_id))
 
-    poll_lesson_reviews(logger, dev_token, bot, tg_chat_id)
+    while True:
+        try:
+            poll_lesson_reviews(logger, dev_token, bot, tg_chat_id)
+        except Exception:
+            logger.error("Бот упал с ошибкой")
+            time.sleep(10)
 
 
 if __name__ == '__main__':
