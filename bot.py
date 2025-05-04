@@ -49,10 +49,8 @@ def poll_lesson_reviews(logger: logging.Logger, dev_token: str, bot: Bot, tg_cha
             time.sleep(30)
         except HTTPError as http_err:
             logger.error(f"Ошибка на стороне сервера: {http_err.response.status_code}")
-            time.sleep(30)
         except Exception as e:
             logger.error(f"Произошла неизвестная ошибка: {e}")
-            time.sleep(30)
 
 
 def process_lesson_attempts(checks_lesson: dict, bot: Bot, tg_chat_id: int) -> Optional[Any | None]:
