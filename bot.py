@@ -98,6 +98,7 @@ def main():
     bot = Bot(token=tg_token)
 
     logging.basicConfig(
+        filename='bot.log',
         format="[%(asctime)s] - %(levelname)s - %(funcName)s - %(message)s",
         level=logging.INFO
     )
@@ -106,12 +107,7 @@ def main():
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramLogsHandler(bot, tg_chat_id))
 
-    while True:
-        try:
-            poll_lesson_reviews(logger, dev_token, bot, tg_chat_id)
-        except Exception:
-            logger.error("Бот упал с ошибкой")
-            time.sleep(30)
+    poll_lesson_reviews(logger, dev_token, bot, tg_chat_id)
 
 
 if __name__ == '__main__':
