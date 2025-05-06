@@ -36,9 +36,9 @@ def get_timestamp(logger: logging.Logger, dev_token: str, bot: Bot, tg_chat_id: 
                 timeout=91
             )
             response.raise_for_status()
-            checks_lesson = response.json()
+            polling_data = response.json()
 
-            new_timestamp = process_lesson_attempts(checks_lesson, bot, tg_chat_id)
+            new_timestamp = process_lesson_attempts(polling_data, bot, tg_chat_id)
             if new_timestamp:
                 params["timestamp"] = new_timestamp
 
@@ -53,11 +53,11 @@ def get_timestamp(logger: logging.Logger, dev_token: str, bot: Bot, tg_chat_id: 
             logger.error(f"Произошла неизвестная ошибка: {e}")
 
 
-def process_lesson_attempts(checks_lesson: dict, bot: Bot, tg_chat_id: int) -> Optional[Any | None]:
-    if checks_lesson.get("timestamp") == "timeout":
-        return checks_lesson.get("timestamp_to_request")
+def process_lesson_attempts(polling_data: dict, bot: Bot, tg_chat_id: int) -> Optional[Any | None]:
+    if polling_data.get("timestamp") == "timeout":
+        return polling_data.get("timestamp_to_request")
     else:
-        new_attempts = checks_lesson.get("new_attempts")
+        new_attempts = polling_data.get("new_attempts")
 
         if new_attempts and len(new_attempts) > 0:
             attempt = new_attempts[0]
@@ -73,7 +73,7 @@ def process_lesson_attempts(checks_lesson: dict, bot: Bot, tg_chat_id: int) -> O
                 lesson_url
             )
 
-        return checks_lesson.get("last_attempt_timestamp")
+        return polling_data.get("last_attempt_timestamp")
 
 
 def send_message(bot: Bot, tg_chat_id: int, lesson_title: str, is_negative: bool, lesson_url: str) -> None:
